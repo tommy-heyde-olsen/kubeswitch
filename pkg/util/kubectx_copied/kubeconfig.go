@@ -16,7 +16,9 @@ package kubeconfigutil
 
 import (
 	"fmt"
+
 	"github.com/pkg/errors"
+
 	"os"
 	"path/filepath"
 	"strings"

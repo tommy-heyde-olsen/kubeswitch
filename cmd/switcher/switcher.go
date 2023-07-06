@@ -472,7 +472,7 @@ func initialize() ([]store.KubeconfigStore, *types.Config, error) {
 	}
 
 	if config != nil {
-		if errList := validation.ValidateConfig(config); errList != nil && len(errList) > 0 {
+		if errList := validation.ValidateConfig(config); len(errList) > 0 {
 			return nil, nil, fmt.Errorf("the switch configuration file contains errors: %s", errList.ToAggregate().Error())
 		}
 	} else {
@@ -558,8 +558,21 @@ func initialize() ([]store.KubeconfigStore, *types.Config, error) {
 				return nil, nil, err
 			}
 			s = eksStore
+		case types.StoreKindRancher:
+			rancherStore, err := store.NewRancherStore(kubeconfigStoreFromConfig)
+			if err != nil {
+				if kubeconfigStoreFromConfig.Required != nil && !*kubeconfigStoreFromConfig.Required {
+					continue
+				}
+				return nil, nil, err
+			}
+			s = rancherStore
 		default:
 			return nil, nil, fmt.Errorf("unknown store %q", kubeconfigStoreFromConfig.Kind)
+		}
+
+		if showDebugLogs {
+			s.GetLogger().Logger.SetLevel(logrus.DebugLevel)
 		}
 
 		// Add cache to the store
